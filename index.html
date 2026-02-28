@@ -8,34 +8,32 @@
       body { margin: 0; overflow: hidden; background: #000; }
       #status {
         position: fixed; top: 10px; width: 100%; text-align: center;
-        color: cyan; font-family: sans-serif; z-index: 1000; font-weight: bold;
-        text-shadow: 2px 2px #000;
+        color: white; z-index: 1000; background: rgba(0,0,0,0.5);
       }
     </style>
   </head>
   <body>
 
-    <div id="status">SCAN STICKER ON FLOOR</div>
+    <div id="status">Status: Loading...</div>
 
     <a-scene 
       mindar-image="imageTargetSrc: ./sticker.mind; autoStart: true; maxTrack: 1;" 
-      renderer="colorManagement: true; logarithmicDepthBuffer: true;">
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false">
       
       <a-assets>
         <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
       </a-assets>
 
-      <a-camera position="0 0 0" look-controls></a-camera>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity light="type: ambient; intensity: 1"></a-entity>
-      <a-entity light="type: directional; intensity: 1" position="0 5 0"></a-entity>
-
-      <a-entity id="room-wrapper" visible="false" position="0 -1.2 -1">
+      <a-entity id="room-wrapper" visible="false" position="0 -1 -1.5">
         <a-gltf-model src="#roomModel" scale="1 1 1" model-fix></a-gltf-model>
         <a-box color="red" position="0 0.5 0" scale="0.1 0.1 0.1"></a-box>
       </a-entity>
 
       <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
+      <a-entity light="type: ambient; intensity: 1.5"></a-entity>
     </a-scene>
 
     <script>
@@ -43,28 +41,26 @@
       const wrapper = document.querySelector('#room-wrapper');
       const target = document.querySelector('#target');
 
-      target.addEventListener("targetFound", () => {
-        status.innerText = "FOUND! LOOK DOWN AT YOUR FEET";
-        wrapper.setAttribute('visible', 'true');
-        
-        // Lock it immediately so it stays in your room
-        setTimeout(() => {
-          document.querySelector('a-scene').systems['mindar-image-system'].stop();
-          status.innerText = "LOCKED. WALK INTO THE ROOM!";
-        }, 300);
-      });
-
+      // 1. Check if model actually loads
       AFRAME.registerComponent('model-fix', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
+            status.innerText = "Model Loaded! Scan Sticker.";
             this.el.getObject3D('mesh').traverse((n) => {
               if (n.isMesh) {
                 n.material.side = 2; // DoubleSide
-                n.material.color.set('#ffffff'); 
+                n.material.transparent = true;
+                n.material.opacity = 0.7; // GHOST MODE: You can see through it!
               }
             });
           });
         }
+      });
+
+      // 2. Show the room but DON'T stop the engine (prevents black screen)
+      target.addEventListener("targetFound", () => {
+        status.innerText = "STICKER FOUND! LOOK FOR THE GHOST ROOM";
+        wrapper.setAttribute('visible', 'true');
       });
     </script>
   </body>
