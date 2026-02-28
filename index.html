@@ -4,26 +4,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; background: #222; }
-      #status { position: fixed; top: 10px; width: 100%; text-align: center; color: white; z-index: 10; font-family: sans-serif; }
+      body { margin: 0; overflow: hidden; background: #111; }
+      #status { position: fixed; top: 10px; width: 100%; text-align: center; color: lime; z-index: 10; font-family: sans-serif; }
     </style>
   </head>
   <body>
-    <div id="status">LOOK AROUND FOR THE ROOM</div>
+    <div id="status">WALK FORWARD INTO THE ROOM</div>
 
-    <a-scene>
+    <a-scene renderer="colorManagement: true;">
       <a-assets>
         <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 1.6 0" look-controls></a-camera>
 
-      <a-entity light="type: ambient; intensity: 1"></a-entity>
-      <a-entity light="type: directional; intensity: 1" position="1 3 1"></a-entity>
+      <a-entity light="type: ambient; intensity: 0.8"></a-entity>
+      <a-entity light="type: point; intensity: 1; position: 0 2 0"></a-entity>
 
-      <a-entity id="room-wrapper" position="0 0 -2">
+      <a-entity id="room-wrapper" position="0 0 -1.5">
         <a-gltf-model src="#roomModel" scale="1 1 1" model-fix></a-gltf-model>
-        <a-box color="red" scale="0.2 0.2 0.2"></a-box>
       </a-entity>
     </a-scene>
 
@@ -31,17 +30,15 @@
       AFRAME.registerComponent('model-fix', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
-            document.querySelector('#status').innerText = "MODEL LOADED. TURN AROUND!";
             this.el.getObject3D('mesh').traverse((n) => {
               if (n.isMesh) {
-                n.material.side = 2; // DoubleSide
-                n.material.transparent = true;
-                n.material.opacity = 0.8;
+                n.material.side = 2; // DoubleSide so you see walls from inside
+                n.material.transparent = false;
+                n.material.opacity = 1;
+                n.material.metalness = 0;
+                n.material.roughness = 1;
               }
             });
-          });
-          this.el.addEventListener('model-error', () => {
-            document.querySelector('#status').innerText = "ERROR: room.glb NOT FOUND";
           });
         }
       });
