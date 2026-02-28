@@ -6,57 +6,81 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     <style>
       body { margin: 0; overflow: hidden; }
+      #ui {
+        position: fixed; bottom: 20px; width: 100%; text-align: center; z-index: 1000;
+      }
+      .btn {
+        padding: 15px 30px; font-size: 18px; background: #00ff00; border: none; 
+        border-radius: 50px; font-weight: bold; display: none;
+      }
       #status {
         position: fixed; top: 10px; width: 100%; text-align: center;
-        color: white; background: red; z-index: 100; font-family: sans-serif;
+        color: white; font-family: sans-serif; z-index: 1000;
       }
     </style>
   </head>
   <body>
 
-    <div id="status">STATUS: MODEL LOADING...</div>
+    <div id="status">SCAN STICKER ON FLOOR</div>
+    <div id="ui">
+      <button id="spawn-btn" class="btn" onclick="spawnRoom()">PLACE ROOM HERE</button>
+    </div>
 
-    <a-scene 
-      mindar-image="imageTargetSrc: ./sticker.mind; autoStart: true; maxTrack: 1;" 
-      renderer="colorManagement: true; logarithmicDepthBuffer: true;">
-      
+    <a-scene mindar-image="imageTargetSrc: ./sticker.mind; autoStart: true; maxTrack: 1;" renderer="colorManagement: true;">
       <a-assets>
         <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
       </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: true"></a-camera>
+      <a-camera id="cam" position="0 0 0" look-controls></a-camera>
 
       <a-entity light="type: ambient; intensity: 1"></a-entity>
       <a-entity light="type: directional; intensity: 1" position="0 5 0"></a-entity>
 
-      <a-entity id="target" mindar-image-target="targetIndex: 0">
-        
-        <a-circle rotation="-90 0 0" radius="2" color="blue" opacity="0.5"></a-circle>
-
-        <a-box position="0 1.6 0" scale="0.2 0.2 0.2" color="red"></a-box>
-
-        <a-gltf-model 
-          id="galleryRoom"
-          src="#roomModel" 
-          rotation="0 0 0" 
-          position="0 1.6 -1" 
-          scale="0.2 0.2 0.2"
-          model-fix> 
-        </a-gltf-model>
+      <a-entity id="room-parent" visible="false">
+         <a-box position="0 0 0" scale="0.1 0.1 0.1" color="red"></a-box>
+         <a-gltf-model src="#roomModel" scale="0.5 0.5 0.5" position="0 -1 -2" model-fix></a-gltf-model>
       </a-entity>
+
+      <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
     </a-scene>
 
     <script>
       const status = document.querySelector('#status');
-      AFRAME.registerComponent('model-fix', {
-        init: function () {
-          this.el.addEventListener('model-loaded', () => { status.innerText = "READY: SCAN STICKER"; status.style.background = "green"; });
-          this.el.addEventListener('model-error', () => { status.innerText = "ERROR: GLB NOT FOUND"; });
-        }
+      const btn = document.querySelector('#spawn-btn');
+      const room = document.querySelector('#room-parent');
+      const target = document.querySelector('#target');
+      const scene = document.querySelector('a-scene');
+
+      // 1. Detect the sticker
+      target.addEventListener("targetFound", () => {
+        status.innerText = "STICKER DETECTED!";
+        status.style.color = "#00ff00";
+        btn.style.display = "inline-block"; // Show the button!
       });
 
-      document.querySelector('#target').addEventListener("targetFound", () => { 
-        status.innerText = "STICKER FOUND - LOOK FOR BLUE DISK"; 
+      // 2. The "Magic" Spawn function
+      function spawnRoom() {
+        status.innerText = "ROOM PLACED!";
+        btn.style.display = "none";
+        
+        // Stop tracking the sticker so it doesn't jump around
+        scene.systems['mindar-image-system'].stop();
+
+        // Make the room visible and put it right in front of the camera
+        room.setAttribute('visible', 'true');
+        
+        // This puts it 1.5 meters down (on floor) and 2 meters ahead
+        console.log("Room spawned manually");
+      }
+
+      AFRAME.registerComponent('model-fix', {
+        init: function () {
+          this.el.addEventListener('model-loaded', () => {
+            this.el.getObject3D('mesh').traverse((n) => {
+              if (n.isMesh) n.material.side = 2; // DoubleSide
+            });
+          });
+        }
       });
     </script>
   </body>
