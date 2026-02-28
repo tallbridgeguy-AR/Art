@@ -4,70 +4,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-    
     <style>
       body { margin: 0; overflow: hidden; }
       #scanning-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
-        color: white; font-family: sans-serif; z-index: 99;
+        background: rgba(0, 0, 0, 0.7); display: flex; flex-direction: column; 
+        justify-content: center; align-items: center; color: white; z-index: 99;
       }
       #scanning-overlay.hidden { display: none; }
-      
-      #ui-layer {
-        position: fixed; bottom: 20px; width: 100%; text-align: center;
-        color: white; font-family: sans-serif; z-index: 10;
-        pointer-events: none;
-      }
-      .btn {
-        pointer-events: auto; padding: 10px 20px; background: #222; 
-        color: white; border: 1px solid white; border-radius: 5px; cursor: pointer;
-      }
+      #ui { position: fixed; bottom: 20px; width: 100%; text-align: center; z-index: 10; }
+      .btn { padding: 10px 20px; background: white; border: none; border-radius: 5px; }
     </style>
   </head>
   <body>
 
     <div id="scanning-overlay">
-      <p>Scan the sticker on the floor...</p>
+      <p>Scan the floor sticker...</p>
     </div>
 
-    <div id="ui-layer">
-      <div id="hint" class="hidden">Room Locked! Look around freely.</div>
-      <button id="reset-btn" class="btn hidden" onclick="location.reload()">Reset Room</button>
+    <div id="ui">
+        <button class="btn" onclick="location.reload()">Reset Room</button>
     </div>
 
     <a-scene 
       mindar-image="imageTargetSrc: ./sticker.mind; filterMinCF: 0.0001; filterBeta: 0.001;" 
-      color-space="sRGB" 
-      renderer="colorManagement: true, physicallyCorrectLights: true, logarithmicDepthBuffer: true" 
-      vr-mode-ui="enabled: false" 
-      device-orientation-permission-ui="enabled: false">
+      renderer="colorManagement: true, logarithmicDepthBuffer: true"
+      vr-mode-ui="enabled: false">
       
       <a-assets>
         <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: true"></a-camera>
-
-      <a-entity light="type: ambient; intensity: 0.8"></a-entity>
-      <a-entity light="type: directional; intensity: 1.2" position="1 5 1"></a-entity>
+      <a-entity light="type: ambient; intensity: 1"></a-entity>
 
       <a-entity id="target" mindar-image-target="targetIndex: 0">
         <a-gltf-model 
           id="galleryRoom"
           src="#roomModel" 
-          rotation="-90 0 0" 
+          rotation="0 0 0" 
           position="0 0 0" 
-          scale="10 10 10"
+          scale="12 12 12"
           model-fix> 
         </a-gltf-model>
       </a-entity>
-      
     </a-scene>
 
     <script>
-      // 1. Fix materials and "DoubleSide" for interior walls
       AFRAME.registerComponent('model-fix', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
@@ -75,8 +58,6 @@
             mesh.traverse((node) => {
               if (node.isMesh) {
                 node.material.side = THREE.DoubleSide; 
-                node.material.metalness = 0.1;
-                node.material.roughness = 0.9;
                 node.frustumCulled = false;
               }
             });
@@ -85,44 +66,25 @@
       });
 
       const targetEl = document.querySelector('#target');
-      const overlay = document.querySelector('#scanning-overlay');
-      const hint = document.querySelector('#hint');
-      const resetBtn = document.querySelector('#reset-btn');
       const galleryRoom = document.querySelector('#galleryRoom');
       const sceneEl = document.querySelector('a-scene');
 
-      let isLocked = false;
-
       targetEl.addEventListener("targetFound", () => { 
-        if (isLocked) return; // Don't run this twice
-
-        overlay.classList.add("hidden"); 
-        hint.classList.remove("hidden");
-        resetBtn.classList.remove("hidden");
-
-        // Wait a split second for the tracking to stabilize
+        document.querySelector('#scanning-overlay').classList.add("hidden");
+        
+        // Let it stabilize for 1 second
         setTimeout(() => {
-            isLocked = true;
-
-            // WORLD POSITION CAPTURE
             const worldPos = new THREE.Vector3();
             const worldQuat = new THREE.Quaternion();
-            const worldScale = new THREE.Vector3();
             
-            // Get where the room is in the real world right now
             galleryRoom.object3D.getWorldPosition(worldPos);
             galleryRoom.object3D.getWorldQuaternion(worldQuat);
-            galleryRoom.object3D.getWorldScale(worldScale);
 
-            // "Kidnap" the room: move it from the target to the main scene
+            // Detach from sticker so you can look away
             sceneEl.object3D.add(galleryRoom.object3D);
 
-            // Re-apply the coordinates so it doesn't move
             galleryRoom.object3D.position.copy(worldPos);
             galleryRoom.object3D.quaternion.copy(worldQuat);
-            galleryRoom.object3D.scale.copy(worldScale);
-            
-            console.log("Room persistent and tracking detached.");
         }, 1000); 
       });
     </script>
