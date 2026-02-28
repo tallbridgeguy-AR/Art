@@ -7,34 +7,38 @@
     
     <style>
       body { margin: 0; overflow: hidden; }
-      
-      /* SCANNING UI */
       #scanning-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.8);
+        background: rgba(0, 0, 0, 0.7);
         display: flex; flex-direction: column; justify-content: center; align-items: center;
         color: white; font-family: sans-serif; z-index: 99;
       }
       #scanning-overlay.hidden { display: none; }
-
-      /* INSTRUCTION HINT */
-      #hint {
+      
+      #ui-layer {
         position: fixed; bottom: 20px; width: 100%; text-align: center;
         color: white; font-family: sans-serif; z-index: 10;
-        text-shadow: 0 0 5px black; pointer-events: none;
+        pointer-events: none;
+      }
+      .btn {
+        pointer-events: auto; padding: 10px 20px; background: #222; 
+        color: white; border: 1px solid white; border-radius: 5px; cursor: pointer;
       }
     </style>
   </head>
   <body>
 
     <div id="scanning-overlay">
-      <p>Scan the sticker to enter the gallery...</p>
+      <p>Scan the sticker on the floor...</p>
     </div>
 
-    <div id="hint" class="hidden">Point at sticker to stabilize room</div>
+    <div id="ui-layer">
+      <div id="hint" class="hidden">Room Locked! Look around freely.</div>
+      <button id="reset-btn" class="btn hidden" onclick="location.reload()">Reset Room</button>
+    </div>
 
     <a-scene 
-      mindar-image="imageTargetSrc: ./sticker.mind; uiScanning: #scanning-overlay; filterMinCF: 0.0001; filterBeta: 0.001;" 
+      mindar-image="imageTargetSrc: ./sticker.mind; filterMinCF: 0.0001; filterBeta: 0.001;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights: true, logarithmicDepthBuffer: true" 
       vr-mode-ui="enabled: false" 
@@ -44,7 +48,7 @@
         <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
       </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
+      <a-camera position="0 0 0" look-controls="enabled: true"></a-camera>
 
       <a-entity light="type: ambient; intensity: 0.8"></a-entity>
       <a-entity light="type: directional; intensity: 1.2" position="1 5 1"></a-entity>
@@ -53,8 +57,8 @@
         <a-gltf-model 
           id="galleryRoom"
           src="#roomModel" 
-          rotation="0 0 0" 
-          position="0 -2 -5" 
+          rotation="-90 0 0" 
+          position="0 0 0" 
           scale="10 10 10"
           model-fix> 
         </a-gltf-model>
@@ -63,19 +67,16 @@
     </a-scene>
 
     <script>
-      // COMPONENT TO FIX MODEL TEXTURES & NORMALS
+      // 1. Fix materials and "DoubleSide" for interior walls
       AFRAME.registerComponent('model-fix', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
             const mesh = this.el.getObject3D('mesh');
             mesh.traverse((node) => {
               if (node.isMesh) {
-                // DoubleSide fixes "invisible" walls from the inside
                 node.material.side = THREE.DoubleSide; 
-                // Adjusting materials to prevent "blown out" white rooms
                 node.material.metalness = 0.1;
                 node.material.roughness = 0.9;
-                // Ensures the model doesn't vibrate against itself
                 node.frustumCulled = false;
               }
             });
@@ -83,19 +84,46 @@
         }
       });
 
-      // UI Logic
       const targetEl = document.querySelector('#target');
       const overlay = document.querySelector('#scanning-overlay');
       const hint = document.querySelector('#hint');
+      const resetBtn = document.querySelector('#reset-btn');
+      const galleryRoom = document.querySelector('#galleryRoom');
+      const sceneEl = document.querySelector('a-scene');
+
+      let isLocked = false;
 
       targetEl.addEventListener("targetFound", () => { 
+        if (isLocked) return; // Don't run this twice
+
         overlay.classList.add("hidden"); 
         hint.classList.remove("hidden");
-      });
+        resetBtn.classList.remove("hidden");
 
-      targetEl.addEventListener("targetLost", () => { 
-        overlay.classList.remove("hidden"); 
-        hint.classList.add("hidden");
+        // Wait a split second for the tracking to stabilize
+        setTimeout(() => {
+            isLocked = true;
+
+            // WORLD POSITION CAPTURE
+            const worldPos = new THREE.Vector3();
+            const worldQuat = new THREE.Quaternion();
+            const worldScale = new THREE.Vector3();
+            
+            // Get where the room is in the real world right now
+            galleryRoom.object3D.getWorldPosition(worldPos);
+            galleryRoom.object3D.getWorldQuaternion(worldQuat);
+            galleryRoom.object3D.getWorldScale(worldScale);
+
+            // "Kidnap" the room: move it from the target to the main scene
+            sceneEl.object3D.add(galleryRoom.object3D);
+
+            // Re-apply the coordinates so it doesn't move
+            galleryRoom.object3D.position.copy(worldPos);
+            galleryRoom.object3D.quaternion.copy(worldQuat);
+            galleryRoom.object3D.scale.copy(worldScale);
+            
+            console.log("Room persistent and tracking detached.");
+        }, 1000); 
       });
     </script>
   </body>
