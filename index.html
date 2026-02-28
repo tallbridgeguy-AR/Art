@@ -6,24 +6,25 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     <style>
       body { margin: 0; overflow: hidden; }
+      #status {
+        position: fixed; top: 10px; width: 100%; text-align: center;
+        color: cyan; font-family: monospace; z-index: 100; font-size: 16px;
+        background: rgba(0,0,0,0.3);
+      }
       #scanning-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; 
         justify-content: center; align-items: center; color: white; z-index: 99;
       }
       #scanning-overlay.hidden { display: none; }
-      #status {
-        position: fixed; top: 10px; width: 100%; text-align: center;
-        color: lime; font-family: monospace; z-index: 100; font-size: 18px;
-      }
     </style>
   </head>
   <body>
 
-    <div id="status">Status: Waiting for Sticker...</div>
+    <div id="status">Point at sticker...</div>
 
     <div id="scanning-overlay">
-      <p>Scan the floor sticker...</p>
+      <p>Scanning Floor Sticker...</p>
     </div>
 
     <a-scene 
@@ -41,14 +42,13 @@
       <a-entity light="type: directional; intensity: 1" position="1 10 1"></a-entity>
 
       <a-entity id="target" mindar-image-target="targetIndex: 0">
-        
-        <a-box id="debug-cube" position="0 0 0" scale="0.2 0.2 0.2" color="red"></a-box>
+        <a-box position="0 0 0" scale="0.1 0.1 0.1" color="red"></a-box>
 
         <a-gltf-model 
           id="galleryRoom"
           src="#roomModel" 
           rotation="0 0 0" 
-          position="0 0 -2" 
+          position="0 0 -2.5" 
           scale="0.5 0.5 0.5"
           model-fix> 
         </a-gltf-model>
@@ -60,11 +60,10 @@
       const targetEl = document.querySelector('#target');
       const overlay = document.querySelector('#scanning-overlay');
 
-      // 1. Ensure the model is visible from both sides
       AFRAME.registerComponent('model-fix', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
-            status.innerText = "Status: Room Model Loaded!";
+            status.innerText = "Model Ready!";
             const mesh = this.el.getObject3D('mesh');
             mesh.traverse((node) => {
               if (node.isMesh) {
@@ -74,32 +73,20 @@
               }
             });
           });
-          this.el.addEventListener('model-error', () => {
-            status.innerText = "Status: ERROR LOADING .GLB!";
-            status.style.color = "red";
-          });
         }
       });
 
-      // 2. Handle the Tracking
       targetEl.addEventListener("targetFound", () => { 
-        status.innerText = "Status: STICKER FOUND!";
+        status.innerText = "Target Found! Locking...";
         overlay.classList.add("hidden");
 
-        // Instead of moving the room, we just "Pause" the engine 
-        // after it finds the sticker so the room stays there.
         setTimeout(() => {
+          // STOP tracking so the room stays put in the world
           const sceneEl = document.querySelector('a-scene');
-          // This keeps the room visible even if you look away
           sceneEl.systems['mindar-image-system'].stop(); 
-          status.innerText = "Status: TRACKING LOCKED!";
-        }, 1500); 
-      });
-
-      targetEl.addEventListener("targetLost", () => {
-        if (status.innerText !== "Status: TRACKING LOCKED!") {
-            status.innerText = "Status: Lost Sticker... searching...";
-        }
+          status.innerText = "LOCKED. Walk toward the room!";
+          status.style.color = "lime";
+        }, 1000); 
       });
     </script>
   </body>
