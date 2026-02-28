@@ -3,64 +3,47 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; background: #000; }
-      #status {
-        position: fixed; top: 10px; width: 100%; text-align: center;
-        color: white; z-index: 1000; background: rgba(0,0,0,0.5);
-      }
+      body { margin: 0; overflow: hidden; background: #222; }
+      #status { position: fixed; top: 10px; width: 100%; text-align: center; color: white; z-index: 10; font-family: sans-serif; }
     </style>
   </head>
   <body>
+    <div id="status">LOOK AROUND FOR THE ROOM</div>
 
-    <div id="status">Status: Loading...</div>
-
-    <a-scene 
-      mindar-image="imageTargetSrc: ./sticker.mind; autoStart: true; maxTrack: 1;" 
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false">
-      
+    <a-scene>
       <a-assets>
         <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
       </a-assets>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-camera position="0 1.6 0" look-controls></a-camera>
 
-      <a-entity id="room-wrapper" visible="false" position="0 -1 -1.5">
+      <a-entity light="type: ambient; intensity: 1"></a-entity>
+      <a-entity light="type: directional; intensity: 1" position="1 3 1"></a-entity>
+
+      <a-entity id="room-wrapper" position="0 0 -2">
         <a-gltf-model src="#roomModel" scale="1 1 1" model-fix></a-gltf-model>
-        <a-box color="red" position="0 0.5 0" scale="0.1 0.1 0.1"></a-box>
+        <a-box color="red" scale="0.2 0.2 0.2"></a-box>
       </a-entity>
-
-      <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
-      <a-entity light="type: ambient; intensity: 1.5"></a-entity>
     </a-scene>
 
     <script>
-      const status = document.querySelector('#status');
-      const wrapper = document.querySelector('#room-wrapper');
-      const target = document.querySelector('#target');
-
-      // 1. Check if model actually loads
       AFRAME.registerComponent('model-fix', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
-            status.innerText = "Model Loaded! Scan Sticker.";
+            document.querySelector('#status').innerText = "MODEL LOADED. TURN AROUND!";
             this.el.getObject3D('mesh').traverse((n) => {
               if (n.isMesh) {
                 n.material.side = 2; // DoubleSide
                 n.material.transparent = true;
-                n.material.opacity = 0.7; // GHOST MODE: You can see through it!
+                n.material.opacity = 0.8;
               }
             });
           });
+          this.el.addEventListener('model-error', () => {
+            document.querySelector('#status').innerText = "ERROR: room.glb NOT FOUND";
+          });
         }
-      });
-
-      // 2. Show the room but DON'T stop the engine (prevents black screen)
-      target.addEventListener("targetFound", () => {
-        status.innerText = "STICKER FOUND! LOOK FOR THE GHOST ROOM";
-        wrapper.setAttribute('visible', 'true');
       });
     </script>
   </body>
