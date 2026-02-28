@@ -6,78 +6,56 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     <style>
       body { margin: 0; overflow: hidden; }
-      #ui {
-        position: fixed; bottom: 20px; width: 100%; text-align: center; z-index: 1000;
-      }
-      .btn {
-        padding: 15px 30px; font-size: 18px; background: #00ff00; border: none; 
-        border-radius: 50px; font-weight: bold; display: none;
-      }
-      #status {
-        position: fixed; top: 10px; width: 100%; text-align: center;
-        color: white; font-family: sans-serif; z-index: 1000;
-      }
+      #ui { position: fixed; bottom: 20px; width: 100%; text-align: center; z-index: 1000; }
+      .btn { padding: 15px 30px; background: #00ff00; border: none; border-radius: 10px; font-weight: bold; display:none; }
     </style>
   </head>
   <body>
+    <div id="ui"><button id="btn" class="btn" onclick="place()">PLACE ROOM</button></div>
 
-    <div id="status">SCAN STICKER ON FLOOR</div>
-    <div id="ui">
-      <button id="spawn-btn" class="btn" onclick="spawnRoom()">PLACE ROOM HERE</button>
-    </div>
+    <a-scene mindar-image="imageTargetSrc: ./sticker.mind; autoStart: true;">
+      <a-assets><a-asset-item id="room" src="room.glb"></a-asset-item></a-assets>
 
-    <a-scene mindar-image="imageTargetSrc: ./sticker.mind; autoStart: true; maxTrack: 1;" renderer="colorManagement: true;">
-      <a-assets>
-        <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
-      </a-assets>
+      <a-camera id="myCam" position="0 0 0" look-controls></a-camera>
 
-      <a-camera id="cam" position="0 0 0" look-controls></a-camera>
-
-      <a-entity light="type: ambient; intensity: 1"></a-entity>
-      <a-entity light="type: directional; intensity: 1" position="0 5 0"></a-entity>
-
-      <a-entity id="room-parent" visible="false">
-         <a-box position="0 0 0" scale="0.1 0.1 0.1" color="red"></a-box>
-         <a-gltf-model src="#roomModel" scale="0.5 0.5 0.5" position="0 -1 -2" model-fix></a-gltf-model>
+      <a-entity id="wrapper" visible="false">
+         <a-gltf-model src="#room" scale="1 1 1" model-fix></a-gltf-model>
+         <a-box color="red" scale="0.1 0.1 0.1"></a-box>
       </a-entity>
 
-      <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
+      <a-entity mindar-image-target="targetIndex: 0" id="tracker"></a-entity>
+      <a-entity light="type: ambient; intensity: 1"></a-entity>
+      <a-entity light="type: directional; intensity: 1" position="1 3 1"></a-entity>
     </a-scene>
 
     <script>
-      const status = document.querySelector('#status');
-      const btn = document.querySelector('#spawn-btn');
-      const room = document.querySelector('#room-parent');
-      const target = document.querySelector('#target');
-      const scene = document.querySelector('a-scene');
+      const btn = document.querySelector('#btn');
+      const wrapper = document.querySelector('#wrapper');
+      const tracker = document.querySelector('#tracker');
 
-      // 1. Detect the sticker
-      target.addEventListener("targetFound", () => {
-        status.innerText = "STICKER DETECTED!";
-        status.style.color = "#00ff00";
-        btn.style.display = "inline-block"; // Show the button!
-      });
+      // Show button when sticker found
+      tracker.addEventListener("targetFound", () => { btn.style.display = "inline-block"; });
 
-      // 2. The "Magic" Spawn function
-      function spawnRoom() {
-        status.innerText = "ROOM PLACED!";
+      function place() {
+        // 1. STOP the AR tracking so the room stays still
+        document.querySelector('a-scene').systems['mindar-image-system'].stop();
+        
+        // 2. Teleport the room to 2 meters in front of where you are looking
+        wrapper.setAttribute('visible', 'true');
+        wrapper.setAttribute('position', '0 -1 -3'); 
+        
         btn.style.display = "none";
-        
-        // Stop tracking the sticker so it doesn't jump around
-        scene.systems['mindar-image-system'].stop();
-
-        // Make the room visible and put it right in front of the camera
-        room.setAttribute('visible', 'true');
-        
-        // This puts it 1.5 meters down (on floor) and 2 meters ahead
-        console.log("Room spawned manually");
+        alert("Room placed 3 meters in front of you. Step back!");
       }
 
       AFRAME.registerComponent('model-fix', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
             this.el.getObject3D('mesh').traverse((n) => {
-              if (n.isMesh) n.material.side = 2; // DoubleSide
+              if (n.isMesh) {
+                n.material.side = 2; // DoubleSide
+                n.material.color.set('#ccc'); // Turn white into light grey to see corners
+              }
             });
           });
         }
