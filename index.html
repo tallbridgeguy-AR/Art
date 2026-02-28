@@ -5,40 +5,59 @@
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <style>
       body { margin: 0; overflow: hidden; background: #000; }
-      #status { position: fixed; top: 10px; width: 100%; text-align: center; color: white; z-index: 10; font-family: sans-serif; background: rgba(0,0,0,0.5); }
+      #status { 
+        position: fixed; top: 10px; width: 100%; text-align: center; 
+        color: lime; z-index: 10; font-family: sans-serif; 
+        background: rgba(0,0,0,0.8); padding: 10px 0;
+      }
     </style>
   </head>
   <body>
-    <div id="status">LOADING ART GALLERY...</div>
+    <div id="status">INITIALIZING WORLD...</div>
 
     <a-scene renderer="colorManagement: true;">
       <a-assets>
         <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
       </a-assets>
 
-      <a-entity id="rig" position="0 0 2">
-        <a-camera look-controls wasd-controls="acceleration: 20"></a-camera>
-      </a-entity>
+      <a-camera id="mainCam" look-controls wasd-controls></a-camera>
 
-      <a-entity light="type: ambient; intensity: 0.8"></a-entity>
-      <a-entity light="type: point; intensity: 1; position: 0 2 0"></a-entity>
+      <a-entity light="type: ambient; intensity: 1"></a-entity>
 
-      <a-entity id="gallery-room" position="0 0 0">
-        <a-gltf-model src="#roomModel" scale="1 1 1" model-fix></a-gltf-model>
+      <a-entity id="fixed-gallery" visible="false">
+        <a-gltf-model src="#roomModel" model-fix></a-gltf-model>
+        <a-circle color="yellow" rotation="-90 0 0" radius="0.5"></a-circle>
       </a-entity>
     </a-scene>
 
     <script>
+      const status = document.querySelector('#status');
+      const gallery = document.querySelector('#fixed-gallery');
+      const cam = document.querySelector('#mainCam');
+
+      // 1. Wait for the model to load
       AFRAME.registerComponent('model-fix', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
-            document.querySelector('#status').innerText = "GALLERY LOADED. WALK FORWARD.";
+            status.innerText = "MODEL READY. STAND STILL...";
+            
+            // 2. The "Anchor" Logic: Wait 3 seconds for the sensors to settle
+            setTimeout(() => {
+              // Get the camera's current position in the real world
+              const camPos = cam.object3D.position;
+              
+              // Move the gallery to that spot, but 2 meters in front
+              gallery.object3D.position.set(camPos.x, camPos.y - 1.6, camPos.z - 2);
+              
+              // IMPORTANT: Make it visible NOW
+              gallery.setAttribute('visible', 'true');
+              
+              status.innerText = "ROOM DROPPED! NOW WALK FORWARD.";
+              status.style.color = "cyan";
+            }, 3000);
+
             this.el.getObject3D('mesh').traverse((n) => {
-              if (n.isMesh) {
-                n.material.side = 2; // DoubleSide
-                n.material.metalness = 0;
-                n.material.roughness = 1;
-              }
+              if (n.isMesh) n.material.side = 2; // DoubleSide
             });
           });
         }
