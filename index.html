@@ -8,18 +8,17 @@
       body { margin: 0; overflow: hidden; }
       #status {
         position: fixed; top: 10px; width: 100%; text-align: center;
-        color: yellow; font-family: monospace; z-index: 100; background: rgba(0,0,0,0.6);
+        color: white; background: red; z-index: 100; font-family: sans-serif;
       }
     </style>
   </head>
   <body>
 
-    <div id="status">Status: Scan the Sticker</div>
+    <div id="status">STATUS: MODEL LOADING...</div>
 
     <a-scene 
       mindar-image="imageTargetSrc: ./sticker.mind; autoStart: true; maxTrack: 1;" 
-      renderer="colorManagement: true; logarithmicDepthBuffer: true;"
-      vr-mode-ui="enabled: false">
+      renderer="colorManagement: true; logarithmicDepthBuffer: true;">
       
       <a-assets>
         <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
@@ -27,18 +26,21 @@
 
       <a-camera position="0 0 0" look-controls="enabled: true"></a-camera>
 
-      <a-entity light="type: ambient; intensity: 0.7"></a-entity>
-      <a-entity light="type: directional; intensity: 1.5" position="2 4 2"></a-entity>
+      <a-entity light="type: ambient; intensity: 1"></a-entity>
+      <a-entity light="type: directional; intensity: 1" position="0 5 0"></a-entity>
 
       <a-entity id="target" mindar-image-target="targetIndex: 0">
-        <a-box position="0 0 0" scale="0.05 0.05 0.05" color="red"></a-box>
+        
+        <a-circle rotation="-90 0 0" radius="2" color="blue" opacity="0.5"></a-circle>
+
+        <a-box position="0 1.6 0" scale="0.2 0.2 0.2" color="red"></a-box>
 
         <a-gltf-model 
           id="galleryRoom"
           src="#roomModel" 
           rotation="0 0 0" 
-          position="0 0 -1" 
-          scale="0.3 0.3 0.3"
+          position="0 1.6 -1" 
+          scale="0.2 0.2 0.2"
           model-fix> 
         </a-gltf-model>
       </a-entity>
@@ -46,31 +48,15 @@
 
     <script>
       const status = document.querySelector('#status');
-      const targetEl = document.querySelector('#target');
-
       AFRAME.registerComponent('model-fix', {
         init: function () {
-          this.el.addEventListener('model-loaded', () => {
-            status.innerText = "Ready! Scan Sticker.";
-            const mesh = this.el.getObject3D('mesh');
-            mesh.traverse((node) => {
-              if (node.isMesh) {
-                node.material.side = THREE.DoubleSide;
-                // Add a subtle grey edge color so white-on-white walls are visible
-                node.material.emissive = new THREE.Color('#333'); 
-                node.frustumCulled = false;
-              }
-            });
-          });
+          this.el.addEventListener('model-loaded', () => { status.innerText = "READY: SCAN STICKER"; status.style.background = "green"; });
+          this.el.addEventListener('model-error', () => { status.innerText = "ERROR: GLB NOT FOUND"; });
         }
       });
 
-      targetEl.addEventListener("targetFound", () => { 
-        status.innerText = "FOUND! Locking...";
-        setTimeout(() => {
-          document.querySelector('a-scene').systems['mindar-image-system'].stop(); 
-          status.innerText = "LOCKED. The model is 1m in front of you.";
-        }, 1000); 
+      document.querySelector('#target').addEventListener("targetFound", () => { 
+        status.innerText = "STICKER FOUND - LOOK FOR BLUE DISK"; 
       });
     </script>
   </body>
