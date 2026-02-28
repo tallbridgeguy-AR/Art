@@ -4,24 +4,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; background: #111; }
-      #status { position: fixed; top: 10px; width: 100%; text-align: center; color: lime; z-index: 10; font-family: sans-serif; }
+      body { margin: 0; overflow: hidden; background: #000; }
+      #status { position: fixed; top: 10px; width: 100%; text-align: center; color: white; z-index: 10; font-family: sans-serif; background: rgba(0,0,0,0.5); }
     </style>
   </head>
   <body>
-    <div id="status">WALK FORWARD INTO THE ROOM</div>
+    <div id="status">LOADING ART GALLERY...</div>
 
     <a-scene renderer="colorManagement: true;">
       <a-assets>
         <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
       </a-assets>
 
-      <a-camera position="0 1.6 0" look-controls></a-camera>
+      <a-entity id="rig" position="0 0 2">
+        <a-camera look-controls wasd-controls="acceleration: 20"></a-camera>
+      </a-entity>
 
       <a-entity light="type: ambient; intensity: 0.8"></a-entity>
       <a-entity light="type: point; intensity: 1; position: 0 2 0"></a-entity>
 
-      <a-entity id="room-wrapper" position="0 0 -1.5">
+      <a-entity id="gallery-room" position="0 0 0">
         <a-gltf-model src="#roomModel" scale="1 1 1" model-fix></a-gltf-model>
       </a-entity>
     </a-scene>
@@ -30,11 +32,10 @@
       AFRAME.registerComponent('model-fix', {
         init: function () {
           this.el.addEventListener('model-loaded', () => {
+            document.querySelector('#status').innerText = "GALLERY LOADED. WALK FORWARD.";
             this.el.getObject3D('mesh').traverse((n) => {
               if (n.isMesh) {
-                n.material.side = 2; // DoubleSide so you see walls from inside
-                n.material.transparent = false;
-                n.material.opacity = 1;
+                n.material.side = 2; // DoubleSide
                 n.material.metalness = 0;
                 n.material.roughness = 1;
               }
