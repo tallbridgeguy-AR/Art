@@ -1,1 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    
+    <style>
+      body { margin: 0; overflow: hidden; }
+      
+      /* SCANNING UI */
+      #scanning-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        color: white; font-family: sans-serif; z-index: 99;
+      }
+      #scanning-overlay.hidden { display: none; }
 
+      /* INSTRUCTION HINT */
+      #hint {
+        position: fixed; bottom: 20px; width: 100%; text-align: center;
+        color: white; font-family: sans-serif; z-index: 10;
+        text-shadow: 0 0 5px black; pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="scanning-overlay">
+      <p>Scan the sticker to enter the gallery...</p>
+    </div>
+
+    <div id="hint" class="hidden">Move your phone to look around the room</div>
+
+    <a-scene 
+      mindar-image="imageTargetSrc: ./sticker.mind; uiScanning: #scanning-overlay;" 
+      color-space="sRGB" 
+      renderer="colorManagement: true, physicallyCorrectLights: true" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false">
+      
+      <a-assets>
+        <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity light="type: ambient; intensity: 1"></a-entity>
+      <a-entity light="type: directional; intensity: 1.5" position="1 2 1"></a-entity>
+
+      <a-entity id="target" mindar-image-target="targetIndex: 0">
+        <a-gltf-model 
+          id="galleryRoom"
+          src="#roomModel" 
+          rotation="90 0 0" 
+          position="0 0 0" 
+          scale="1.5 1.5 1.5"
+          model-fix> </a-gltf-model>
+      </a-entity>
+      
+    </a-scene>
+
+    <script>
+      const targetEl = document.querySelector('#target');
+      const overlay = document.querySelector('#scanning-overlay');
+      const hint = document.querySelector('#hint');
+      const room = document.querySelector('#galleryRoom');
+
+      // Handle UI when sticker is found
+      targetEl.addEventListener("targetFound", () => { 
+        overlay.classList.add("hidden"); 
+        hint.classList.remove("hidden");
+      });
+      targetEl.addEventListener("targetLost", () => { 
+        overlay.classList.remove("hidden"); 
+        hint.classList.add("hidden");
+      });
+
+      // COMPONENT TO FIX MODEL VISIBILITY
+      AFRAME.registerComponent('model-fix', {
+        init: function () {
+          this.el.addEventListener('model-loaded', () => {
+            const mesh = this.el.getObject3D('mesh');
+            mesh.traverse((node) => {
+              if (node.isMesh) {
+                // IMPORTANT: This allows us to see the "inside" walls
+                node.material.side = THREE.DoubleSide; 
+                node.material.metalness = 0.2;
+                node.material.roughness = 0.8;
+              }
+            });
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
