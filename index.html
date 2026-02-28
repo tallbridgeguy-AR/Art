@@ -1,67 +1,35 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; background: #000; }
-      #status { 
-        position: fixed; top: 10px; width: 100%; text-align: center; 
-        color: lime; z-index: 10; font-family: sans-serif; 
-        background: rgba(0,0,0,0.8); padding: 10px 0;
-      }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #111; color: white; }
+        .ar-button { padding: 20px 40px; font-size: 20px; background: #007AFF; color: white; border: none; border-radius: 10px; text-decoration: none; font-weight: bold; cursor: pointer; }
+        p { margin-bottom: 20px; text-align: center; padding: 0 20px; }
     </style>
-  </head>
-  <body>
-    <div id="status">INITIALIZING WORLD...</div>
+</head>
+<body>
 
-    <a-scene renderer="colorManagement: true;">
-      <a-assets>
-        <a-asset-item id="roomModel" src="room.glb"></a-asset-item>
-      </a-assets>
+    <h2>Gallery AR Launch</h2>
+    <p>This uses your phone's built-in AR viewer. <br>It will stay on the floor 100%.</p>
 
-      <a-camera id="mainCam" look-controls wasd-controls></a-camera>
+    <a class="ar-button" 
+       href="intent://tallbridgeguy-ar.github.io/Art/room.glb#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https://developers.google.com/ar;end;">
+       ENTER GALLERY (Android)
+    </a>
 
-      <a-entity light="type: ambient; intensity: 1"></a-entity>
+    <br><br>
 
-      <a-entity id="fixed-gallery" visible="false">
-        <a-gltf-model src="#roomModel" model-fix></a-gltf-model>
-        <a-circle color="yellow" rotation="-90 0 0" radius="0.5"></a-circle>
-      </a-entity>
-    </a-scene>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <model-viewer 
+        src="room.glb" 
+        ar 
+        ar-modes="webxr scene-viewer quick-look" 
+        camera-controls 
+        alt="A 3D model of your gallery" 
+        style="width: 200px; height: 200px;">
+        <button slot="ar-button" class="ar-button">ENTER GALLERY (iPhone/Universal)</button>
+    </model-viewer>
 
-    <script>
-      const status = document.querySelector('#status');
-      const gallery = document.querySelector('#fixed-gallery');
-      const cam = document.querySelector('#mainCam');
-
-      // 1. Wait for the model to load
-      AFRAME.registerComponent('model-fix', {
-        init: function () {
-          this.el.addEventListener('model-loaded', () => {
-            status.innerText = "MODEL READY. STAND STILL...";
-            
-            // 2. The "Anchor" Logic: Wait 3 seconds for the sensors to settle
-            setTimeout(() => {
-              // Get the camera's current position in the real world
-              const camPos = cam.object3D.position;
-              
-              // Move the gallery to that spot, but 2 meters in front
-              gallery.object3D.position.set(camPos.x, camPos.y - 1.6, camPos.z - 2);
-              
-              // IMPORTANT: Make it visible NOW
-              gallery.setAttribute('visible', 'true');
-              
-              status.innerText = "ROOM DROPPED! NOW WALK FORWARD.";
-              status.style.color = "cyan";
-            }, 3000);
-
-            this.el.getObject3D('mesh').traverse((n) => {
-              if (n.isMesh) n.material.side = 2; // DoubleSide
-            });
-          });
-        }
-      });
-    </script>
-  </body>
+</body>
 </html>
