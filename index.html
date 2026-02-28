@@ -2,82 +2,34 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <style>
-        body { margin: 0; background: #000; font-family: sans-serif; color: white; }
-        
-        /* The 3D Viewer */
-        model-viewer { width: 100vw; height: 100vh; }
-
-        /* The Button Container */
-        .controls {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            z-index: 100;
-        }
-
-        .btn {
-            padding: 15px 25px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid white;
-            color: white;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        #ar-button {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 12px 24px;
-            background: #007AFF;
-            border: none;
-            border-radius: 50px;
-            color: white;
-            font-weight: bold;
-            z-index: 100;
-        }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #111; color: white; }
+        .ar-button { padding: 20px 40px; font-size: 20px; background: #007AFF; color: white; border: none; border-radius: 10px; text-decoration: none; font-weight: bold; cursor: pointer; }
+        p { margin-bottom: 20px; text-align: center; padding: 0 20px; }
     </style>
 </head>
 <body>
 
-    <button slot="ar-button" id="ar-button">VIEW IN YOUR ROOM</button>
+    <h2>Gallery AR Launch</h2>
+    <p>This uses your phone's built-in AR viewer. <br>It will stay on the floor 100%.</p>
 
+    <a class="ar-button" 
+       href="intent://tallbridgeguy-ar.github.io/Art/room.glb#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https://developers.google.com/ar;end;">
+       ENTER GALLERY (Android)
+    </a>
+
+    <br><br>
+
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     <model-viewer 
-        id="gallery"
         src="room.glb" 
         ar 
         ar-modes="webxr scene-viewer quick-look" 
         camera-controls 
-        shadow-intensity="1">
-        
-        <div class="controls">
-            <button class="btn" onclick="changeScale(-0.1)">Smaller -</button>
-            <button class="btn" onclick="changeScale(0.1)">Bigger +</button>
-        </div>
-
+        alt="A 3D model of your gallery" 
+        style="width: 200px; height: 200px;">
+        <button slot="ar-button" class="ar-button">ENTER GALLERY (iPhone/Universal)</button>
     </model-viewer>
 
-    <script>
-        const modelViewer = document.querySelector("#gallery");
-        let currentScale = 1.0;
-
-        function changeScale(offset) {
-            currentScale += offset;
-            // Prevent the room from disappearing or getting too huge
-            if (currentScale < 0.1) currentScale = 0.1;
-            if (currentScale > 5.0) currentScale = 5.0;
-            
-            // Set the scale in all three directions (X, Y, Z)
-            modelViewer.scale = `${currentScale} ${currentScale} ${currentScale}`;
-        }
-    </script>
 </body>
 </html>
