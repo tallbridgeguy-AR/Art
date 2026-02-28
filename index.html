@@ -3,78 +3,81 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    
     <style>
-        body { 
-            margin: 0; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: #0a0a0a; 
-            color: white; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            overflow: hidden;
-        }
+        body { margin: 0; background: #000; font-family: sans-serif; color: white; }
+        
+        /* The 3D Viewer */
+        model-viewer { width: 100vw; height: 100vh; }
 
-        /* The 3D Preview Container */
-        model-viewer {
-            width: 100%;
-            height: 80vh;
-            --poster-color: transparent;
-        }
-
-        /* The Fixed AR Button Style */
-        #ar-button {
-            background-color: #ffffff;
-            border-radius: 30px;
-            border: none;
-            position: absolute;
-            bottom: 50px;
+        /* The Button Container */
+        .controls {
+            position: fixed;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 16px 32px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #000;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
-            white-space: nowrap; /* Prevents text cutting off */
             display: flex;
-            align-items: center;
-            gap: 10px;
+            gap: 15px;
+            z-index: 100;
         }
 
-        #ar-button:active { background-color: #ddd; }
+        .btn {
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid white;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-        h1 { font-size: 24px; margin-bottom: 5px; letter-spacing: 1px; }
-        p { font-size: 14px; opacity: 0.7; margin-bottom: 20px; }
-
-        /* Hide the button if AR is not supported on the device */
-        #ar-button[slot="ar-button"] { display: block; }
-        .hidden { display: none; }
+        #ar-button {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background: #007AFF;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-weight: bold;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Art Gallery AR</h1>
-    <p>View the collection in your space</p>
+    <button slot="ar-button" id="ar-button">VIEW IN YOUR ROOM</button>
 
     <model-viewer 
+        id="gallery"
         src="room.glb" 
         ar 
         ar-modes="webxr scene-viewer quick-look" 
         camera-controls 
-        shadow-intensity="1" 
-        exposure="1"
-        alt="3D Art Gallery Model">
+        shadow-intensity="1">
         
-        <button slot="ar-button" id="ar-button">
-            <span>START AR EXPERIENCE</span>
-        </button>
+        <div class="controls">
+            <button class="btn" onclick="changeScale(-0.1)">Smaller -</button>
+            <button class="btn" onclick="changeScale(0.1)">Bigger +</button>
+        </div>
 
     </model-viewer>
 
-    <div style="height: 10vh;"></div> </body>
+    <script>
+        const modelViewer = document.querySelector("#gallery");
+        let currentScale = 1.0;
+
+        function changeScale(offset) {
+            currentScale += offset;
+            // Prevent the room from disappearing or getting too huge
+            if (currentScale < 0.1) currentScale = 0.1;
+            if (currentScale > 5.0) currentScale = 5.0;
+            
+            // Set the scale in all three directions (X, Y, Z)
+            modelViewer.scale = `${currentScale} ${currentScale} ${currentScale}`;
+        }
+    </script>
+</body>
 </html>
