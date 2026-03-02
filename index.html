@@ -61,18 +61,20 @@
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
     
     <model-viewer 
-        src="room4.glb" 
-        ar 
-        ar-modes="webxr scene-viewer quick-look" 
-        ar-placement="floor"
-        camera-controls 
-        alt="A 3D model of your gallery">
-        
-        <button slot="ar-button" class="ar-button">
-            ENTER GALLERY (Universal)
-        </button>
-        
-    </model-viewer>
+    src="room4.glb" 
+    ar 
+    ar-modes="webxr scene-viewer quick-look" 
+    ar-placement="floor"
+    camera-controls 
+    shadow-intensity="1"
+    interaction-prompt="auto"
+    alt="A 3D model of your gallery">
+    
+    <button slot="ar-button" class="ar-button">
+        ENTER GALLERY (Universal)
+    </button>
+    
+</model-viewer>
 
 </body>
 </html>
