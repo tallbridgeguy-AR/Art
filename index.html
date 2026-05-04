@@ -1,101 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Gallery Launch</title>
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    
+/* ART phonebook code */
+
+
+
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            font-family: sans-serif;
+        body { 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            background: #111; 
+            color: white; 
         }
 
-        /* Container for everything */
-        #ar-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        model-viewer {
-            width: 100%;
-            height: 100%;
-            background-color: #111;
-        }
-
-        /* The clickable "Enter" button */
-        #custom-ar-button {
-            background-color: #007AFF;
-            border-radius: 50px;
-            padding: 18px 40px;
-            color: white;
-            border: none;
-            font-weight: bold;
-            font-size: 20px;
-            position: absolute;
-            bottom: 60px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 999; /* Ensures it sits on top of the image */
+        /* Fixed Button Styling */
+        .ar-button { 
+            display: inline-block;
+            padding: 20px 30px; 
+            font-size: 18px; 
+            background: #007AFF; 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            font-weight: bold; 
             cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-            display: block;
+            text-align: center;
+            /* This ensures the background color covers all text */
+            white-space: nowrap;
+            width: auto;
+            min-width: 200px;
+            box-sizing: border-box;
         }
 
-        /* Optional: Highlighting the button when tapped */
-        #custom-ar-button:active {
-            background-color: #0056b3;
-            transform: translateX(-50%) scale(0.95);
+        p { margin-bottom: 20px; text-align: center; padding: 0 20px; opacity: 0.8; }
+        h2 { margin-top: 0; }
+
+        /* The container for the 3D preview */
+        model-viewer {
+            width: 300px; 
+            height: 300px;
+            background-color: #222;
+            border-radius: 15px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-    <div id="ar-container">
-        <!-- The 3D Component -->
-        <model-viewer 
-            id="gallery-model"
-            src="room33.glb" 
-            ios-src="room33.usdz"
-            poster="screenstate.png"
-            loading="eager"
-            ar 
-            ar-modes="scene-viewer quick-look webxr" 
-            ar-placement="floor"
-            camera-controls
-            alt="Stuart Nielsen gallery">
-            
-            <!-- We use a standard button here instead of the 'slot' version -->
-            <button id="custom-ar-button">
-                ENTER GALLERY
-            </button>
+    <h2>Gallery AR Launch</h2>
+    <p>Built-in AR Viewer: Stays on the floor 100%.</p>
 
-        </model-viewer>
-    </div>
+    <a class="ar-button" 
+       href="intent://tallbridgeguy-ar.github.io/Art/room.glb#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https://developers.google.com/ar;end;">
+       ENTER GALLERY
+    </a>
 
-    <script>
-        const modelViewer = document.querySelector('#gallery-model');
-        const arButton = document.querySelector('#custom-ar-button');
-
-        // Logic 1: When the button is clicked, launch AR
-        arButton.addEventListener('click', () => {
-            modelViewer.activateAR();
-        });
-
-        // Logic 2: (Optional) Make the whole splash image clickable too
-        modelViewer.addEventListener('click', (event) => {
-            // Only trigger if they didn't click the button itself (to avoid double trigger)
-            if (event.target !== arButton) {
-                modelViewer.activateAR();
-            }
-        });
-    </script>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    
+    <model-viewer 
+    src="room33.glb" 
+    ar 
+    ar-modes="webxr scene-viewer quick-look" 
+    ar-placement="floor"
+    camera-controls 
+    shadow-intensity="1"
+    interaction-prompt="auto"
+    alt="Stuart Nielsen gallery">
+    
+    <button slot="ar-button" class="ar-button">
+        ENTER GALLERY (Universal)
+    </button>
+    
+</model-viewer>
 
 </body>
 </html>
