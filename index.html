@@ -3,103 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gallery AR Launch</title>
+    <title>ART Phonebook AR Gallery</title>
     
-    <!-- Load model-viewer script in the head -->
+    <!-- The Magic Script for AR -->
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            background: #111; 
-            color: white; 
-        }
-
-        .container {
-            text-align: center;
-            padding: 20px;
-            max-width: 400px;
-        }
-
-        /* The container for the 3D preview */
-        model-viewer {
+        body { margin: 0; background: #111; color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        
+        /* 
+         * SPLASH SCREEN (screenstate.png overlay)
+         * This container covers the entire viewport initially.
+         */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            height: 400px;
-            background-color: #222;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            --poster-color: transparent;
+            height: 100%;
+            background-color: #111; /* Match body background */
+            background-image: url('screenstate.png'); /* The background image */
+            background-size: cover; /* or 'contain' if you prefer the whole image visible */
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100; /* Must be higher than the model-viewer */
+            transition: opacity 0.5s ease, visibility 0.5s ease; /* Smooth transition */
         }
 
-        /* AR Button Styling */
-        .ar-button { 
-            display: inline-block;
-            padding: 16px 32px; 
-            font-size: 16px; 
-            background: #007AFF; 
-            color: white; 
-            border: none; 
-            border-radius: 50px; 
-            text-decoration: none; 
-            font-weight: bold; 
+        /* Styling for the Proceed/Start Button */
+        #start-button {
+            background: #007AFF; /* iOS blue style, consistent with earlier design */
+            color: white;
+            padding: 16px 32px;
+            border-radius: 30px;
+            border: none;
+            font-weight: bold;
+            font-size: 18px;
             cursor: pointer;
+            margin-top: 20px; /* Space below any text on screenstate.png */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             transition: transform 0.2s ease, background 0.2s ease;
         }
 
-        .ar-button:active {
+        #start-button:active {
             transform: scale(0.95);
             background: #005ec5;
         }
 
-        p { margin-bottom: 20px; opacity: 0.8; line-height: 1.5; }
-        h2 { margin-bottom: 10px; }
-
-        /* Hide the default AR button so we can use our custom one */
-        #ar-button-custom {
-            position: absolute;
-            bottom: 16px;
-            right: 16px;
+        /* Class to hide the splash screen via JavaScript */
+        #splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none; /* Users can click through it */
         }
+
+        /* 
+         * THE AR VIEWER
+         * This will be visible *under* the splash screen until start is clicked.
+         */
+        model-viewer {
+            width: 90vw;
+            height: 70vh;
+            background-color: #222;
+            --poster-color: transparent;
+            z-index: 1;
+        }
+
+        /* This custom launch button is only visible on supported mobile devices */
+        #ar-launch-custom {
+            background: rgba(255, 255, 255, 0.8);
+            color: #111;
+            padding: 12px 24px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>Gallery AR Launch</h2>
-        <p>Preview the gallery below. Tap the button to place the room in your actual space.</p>
-
-        <!-- 3D Viewer -->
-        <model-viewer 
-            src="room33.glb" 
-            ar 
-            ar-modes="webxr scene-viewer quick-look" 
-            ar-placement="floor"
-            camera-controls 
-            touch-action="pan-y"
-            shadow-intensity="1"
-            alt="Stuart Nielsen gallery">
-            
-            <!-- Custom AR Launch Button (visible on mobile) -->
-            <button slot="ar-button" class="ar-button" id="ar-button-custom">
-                ENTER GALLERY
-            </button>
-
-            <!-- Loading Slot -->
-            <div slot="poster" style="color: #666; padding-top: 180px;">Loading 3D Gallery...</div>
-        </model-viewer>
-
-        <!-- Optional: Manual Android Intent Link (Only if needed) -->
-        <a class="ar-button" 
-           href="intent://tallbridgeguy-ar.github.io/Art/room33.glb#Intent;scheme=https;package=com.google.ar.core;action=android.intent.action.VIEW;S.browser_fallback_url=https://developers.google.com/ar;end;">
-           FORCE ANDROID AR
-        </a>
+    <!-- 
+        1. THE SPLASH/START SCREEN
+        This div is layered on top of the viewer.
+    -->
+    <div id="splash-screen">
+        <!-- 
+           If screenstate.png contains its own title and text, leave this empty.
+           If you want to overlay text on screenstate.png, add it here:
+           <h2>Welcome to ART Phonebook</h2> 
+        -->
+        
+        <button id="start-button">START AR EXPERIENCE</button>
     </div>
 
+
+    <!-- 
+        2. THE AR/3D VIEWER (Visible once splash is hidden)
+    -->
+    <model-viewer 
+        id="gallery-model"
+        src="room33.glb" 
+        ios-src="room33.usdz" /* Remember iOS needs .usdz */
+        ar 
+        ar-modes="scene-viewer webxr quick-look" 
+        camera-controls 
+        auto-rotate 
+        shadow-intensity="1" 
+        ar-placement="floor"
+        alt="A 3D model of a gallery">
+        
+        <!-- Button visible *only* on mobile after 3D loads -->
+        <button slot="ar-button" id="ar-launch-custom">
+            🚀 ENTER ROOM (AR)
+        </button>
+
+    </model-viewer>
+
+    <!-- 3. JAVASCRIPT: THE START LOGIC -->
+    <script>
+        const splashScreen = document.getElementById('splash-screen');
+        const startButton = document.getElementById('start-button');
+
+        // Function to hide the splash screen when the button is clicked
+        startButton.addEventListener('click', () => {
+            splashScreen.classList.add('hidden');
+        });
+
+        // Simple error handling for the 3D model (still good practice)
+        const modelViewer = document.querySelector('#gallery-model');
+        modelViewer.addEventListener('error', (error) => {
+            console.error("Error loading 3D model:", error);
+            // We still need to hide the splash if the model fails, so the page isn't stuck.
+            splashScreen.classList.add('hidden');
+            alert("Model could not load. Ensure HTTPS, CORS, and files (glb/usdz) are correct.");
+        });
+    </script>
 </body>
 </html>
